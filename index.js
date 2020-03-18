@@ -57,6 +57,8 @@ var impossiblePuzzle = [
 //Default values
 var puzLength = 9;
 var puzzle = easyPuzzle;
+var isSelected = false;
+var selected = [];
 setTable();
 
 //Initializes table and difficulty
@@ -74,11 +76,31 @@ function setTable() {
   $(".difficulty").html(puzzle[9]);
   //Resets solve timer
   $(".solve-time").html("");
+
+  isSelected = false;
+  $(".row-" + selected[0]).children('td').eq(selected[1]).removeClass("selected");
+  selected = [];
 }
 
+//UI Features
+//--------------------------------------------------------
+$( "td" ).hover(
+  function() {
+    $(this).addClass("hover");
+    if (isSelected) {
+      $(".row-" + selected[0]).children('td').eq(selected[1]).removeClass("hover");
+    }
+  }, function() {
+    $(this).removeClass("hover");
+  }
+);
+
+
+
+// Buttons
+//--------------------------------------------------------
 //Puzzle select buttons
 $(".puzzle-select").click(function() {
-  console.log($(this));
   if ($(this).hasClass("easy-puzzle")) {
     puzzle = easyPuzzle;
     setTable();
@@ -98,25 +120,44 @@ $(".puzzle-select").click(function() {
 //Solve Button
 $("button[name='solve-btn']").click(function() {
   var start = Date.now();
-  if(!solveSudoku()) {
-    alert("Puzzle cannot be solved!");
-  }
+  var solved = solveSudoku();
+
   var delta = Date.now()-start;
   if ((delta/1000) > 0.005) {
     $(".solve-time").html((delta/1000) + " seconds");
   }
+
+  if (!solved) {
+    alert("Puzzle cannot be solved!");
+  }
 })
 
-//Gets the position of clicked element
+//Reset Button
+$("button[name='reset-btn']").click(function() {
+  setTable();
+})
+
+
+//Getters and Setters
+//--------------------------------------------------------
+//Gets the position of clicked element and selects it
 $(".cell").click(function() {
+  if (isSelected) {
+    $(".row-" + selected[0]).children('td').eq(selected[1]).removeClass("selected");
+  }
+
   var column = $(this).attr('class').split(' ')[1];
   var row = $(this).parent().attr('class').split(' ')[1];
 
   var columnNum = column[column.length - 1];
   var rowNum = row[row.length - 1];
-  var numAtRowCol = getValueAt(rowNum, columnNum);
+  var numValue = getValueAt(rowNum, columnNum);
 
-  console.log(columnNum + "," + rowNum + ", val: " + numAtRowCol);
+  console.log(columnNum + "," + rowNum + ", val: " + numValue);
+
+  isSelected = true;
+  selected = [rowNum, columnNum];
+  $(".row-" + selected[0]).children('td').eq(selected[1]).addClass("selected").removeClass("hover");
 })
 
 //Set and get value at grid position
@@ -127,6 +168,22 @@ function setValueAt(row, column, num) {
   $(".row-" + row).children('td').eq(column).html(num);
 }
 
+//User Input functions
+//--------------------------------------------------------
+$(document).keypress(function(key) {
+  if (isSelected) {
+    console.log(selected);
+    if (!isNaN(key.key) && key.key != 0) {
+      if (puzzle[selected[0]][selected[1]] == 0) {
+        setValueAt(selected[0],selected[1], key.key);
+      }
+    }
+  }
+})
+
+
+//Solving functions
+//--------------------------------------------------------
 //Sudoku solver using backtracking
 function solveSudoku() {
   var unknown = findUnknown();
