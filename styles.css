@@ -34,18 +34,57 @@ tr:nth-child(3n) td {
   border-bottom: 3px solid ;
 }
 
+/* Sudoku select colors */
 .selected {
   background-color: #DAF7FF;
 }
-
 .hover {
   background-color: #f5f5f5;
 }
 
+/* Main Page */
 .title {
   margin: 2rem;
 }
 
+.difficulty {
+  margin-top: 2rem;
+}
+
 .solve-reset {
   margin: 1rem;
+}
+
+.title-bottom {
+  margin-top: 2rem;
+  font-size: 14px;
+}
+
+/* Explanation Page */
+#explanation {
+  margin: 4rem auto;
+  width: 75%;
+}
+
+.learn-title {
+  padding: 2rem 1rem;
+  color: white;
+  background-color: #333333;
+}
+
+.explain-text {
+  padding-top: 2rem;
+  margin: 0 auto;
+  width: 75%;
+  font-size: 20px;
+}
+
+.explain-img {
+  padding-top: 2rem;
+  width: 60%;
+}
+
+.explain-img2 {
+  padding-top: 2rem;
+  width: 50%;
 }

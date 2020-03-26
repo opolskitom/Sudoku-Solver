@@ -96,7 +96,6 @@ $( "td" ).hover(
 );
 
 
-
 // Buttons
 //--------------------------------------------------------
 //Puzzle select buttons
@@ -142,6 +141,7 @@ $("button[name='reset-btn']").click(function() {
 //--------------------------------------------------------
 //Gets the position of clicked element and selects it
 $(".cell").click(function() {
+  this.focus();
   if (isSelected) {
     $(".row-" + selected[0]).children('td').eq(selected[1]).removeClass("selected");
   }
@@ -186,24 +186,28 @@ $(document).keypress(function(key) {
 //--------------------------------------------------------
 //Sudoku solver using backtracking
 function solveSudoku() {
+  //First find the next unsolved
   var unknown = findUnknown();
   if (unknown[0] == -1) {
     return true;
   }
 
+  //Set coordinate of unknown position
   var row = unknown[0];
   var column = unknown[1];
 
   //Try all values
   for (var num = 1; num <= 9; num++) {
-    //If it works, go forward
+    //If valid position, move forward
     if (isValid(row, column, num)) {
-      //Set value and move to next
+      //Set value and move to next position
       setValueAt(row, column, num);
 
       if (solveSudoku()) {
         return true;
       }
+
+      //Reset value if no valid solutions
       setValueAt(row, column, "");
     }
   }
