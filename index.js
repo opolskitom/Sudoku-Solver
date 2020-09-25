@@ -57,8 +57,15 @@ var impossiblePuzzle = [
 //Default values
 var puzLength = 9;
 var puzzle = easyPuzzle;
+var logValues = false; //log where values are being placed and clicked
+var vTimeCounter = 0; //counter for occurances of setting ()
+var timePerValue = 50; //ms of time it takes to display a value
+var stopSolve = false;
+
+//Public selection values
 var isSelected = false;
 var selected = [];
+
 setTable();
 
 //Initializes table and difficulty
@@ -74,7 +81,8 @@ function setTable() {
   }
   //Sets difficulty name
   $(".difficulty").html(puzzle[9]);
-  //Resets solve timer
+  //Resets solve timers
+  $(".official-time").html("");
   $(".solve-time").html("");
 
   isSelected = false;
@@ -102,37 +110,52 @@ $( "td" ).hover(
 $(".puzzle-select").click(function() {
   if ($(this).hasClass("easy-puzzle")) {
     puzzle = easyPuzzle;
+    timePerValue = 50;
     setTable();
   } else if ($(this).hasClass("medium-puzzle")) {
     puzzle = mediumPuzzle;
+    timePerValue = 4;
     setTable();
   } else if ($(this).hasClass("hard-puzzle")){
     puzzle = hardPuzzle;
+    timePerValue = 4;
     setTable();
+    alert("WARNING: Solving this with backtracking can take upwards of over THREE minutes and is not recommended!")
   } else {
     puzzle = impossiblePuzzle;
+    timePerValue = 4;
     setTable();
-    alert("WARNING: Solving this with backtracking can take upwards of over one minute and is not recommended!")
+    alert("WARNING: Solving this with backtracking can take upwards of over FIVE minutes and is not recommended!")
   }
 })
 
 //Solve Button
-$("button[name='solve-btn']").click(function() {
+$("button[name='solve-btn']").click(async function() {
   var start = Date.now();
-  var solved = solveSudoku();
+  vTimeCounter = 0;
+  stopSolve = false;
+  var solved = await solveSudoku();
+  console.log(solved);
 
   var delta = Date.now()-start;
+  var visualDifference = vTimeCounter * timePerValue;
+  var officialTime = delta - visualDifference;
+
   if ((delta/1000) > 0.005) {
-    $(".solve-time").html((delta/1000) + " seconds");
+    $(".official-time").html((officialTime/1000) +" seconds");
+    $(".solve-time").html((delta/1000)+" seconds total - "+(visualDifference/1000)+" seconds visually");
   }
 
-  if (!solved) {
+  if (!solved && stopSolve) {
+    alert("Puzzle aborted!");
+  } else if (!solved) {
     alert("Puzzle cannot be solved!");
   }
 })
 
 //Reset Button
 $("button[name='reset-btn']").click(function() {
+  stopSolve = true;
   setTable();
 })
 
@@ -153,7 +176,7 @@ $(".cell").click(function() {
   var rowNum = row[row.length - 1];
   var numValue = getValueAt(rowNum, columnNum);
 
-  console.log(columnNum + "," + rowNum + ", val: " + numValue);
+  if (logValues) console.log(columnNum + "," + rowNum + ", val: " + numValue);
 
   isSelected = true;
   selected = [rowNum, columnNum];
@@ -164,15 +187,23 @@ $(".cell").click(function() {
 function getValueAt(row, column) {
   return $(".row-" + row).children('td').eq(column).html();
 }
-function setValueAt(row, column, num) {
-  $(".row-" + row).children('td').eq(column).html(num);
+async function setValueAt(row, column, num) {
+  if (logValues) console.log("Placing " + num + " at [" + row + "," + column + "]");
+  vTimeCounter++;
+
+  return new Promise(resolve => {
+    setTimeout(() => {
+      $(".row-" + row).children('td').eq(column).html(num);
+      resolve(0);
+    }, timePerValue);
+  });
 }
 
 //User Input functions
 //--------------------------------------------------------
 $(document).keypress(function(key) {
   if (isSelected) {
-    console.log(selected);
+    if (logValues) console.log(selected);
     if (!isNaN(key.key) && key.key != 0) {
       if (puzzle[selected[0]][selected[1]] == 0) {
         setValueAt(selected[0],selected[1], key.key);
@@ -185,7 +216,8 @@ $(document).keypress(function(key) {
 //Solving functions
 //--------------------------------------------------------
 //Sudoku solver using backtracking
-function solveSudoku() {
+async function solveSudoku() {
+  if (stopSolve) return false;
   //First find the next unsolved
   var unknown = findUnknown();
   if (unknown[0] == -1) {
@@ -201,14 +233,15 @@ function solveSudoku() {
     //If valid position, move forward
     if (isValid(row, column, num)) {
       //Set value and move to next position
-      setValueAt(row, column, num);
+      await setValueAt(row, column, num);
 
-      if (solveSudoku()) {
+      //Recursively solve puzzle until return true or false
+      if (await solveSudoku()) {
         return true;
       }
 
       //Reset value if no valid solutions
-      setValueAt(row, column, "");
+      await setValueAt(row, column, "");
     }
   }
   return false;

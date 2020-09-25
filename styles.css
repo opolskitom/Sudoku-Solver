@@ -55,6 +55,14 @@ tr:nth-child(3n) td {
   margin: 1rem;
 }
 
+.official-time {
+  font-size: 18px;
+}
+
+.solve-time {
+  font-size: 12px;
+}
+
 .title-bottom {
   margin-top: 2rem;
   font-size: 14px;
